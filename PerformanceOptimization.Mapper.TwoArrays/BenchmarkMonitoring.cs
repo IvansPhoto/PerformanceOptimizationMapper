@@ -19,5 +19,5 @@ public class BenchmarkMonitoring
     public Output[] MapOriginal() => Original.Map(_input);
 
     [Benchmark(Baseline = true)]
-    public Output[] MapOptimized1() => Optimized.Map(_input);
+    public Output[] MapOptimized() => Optimized.Map(_input);
 }

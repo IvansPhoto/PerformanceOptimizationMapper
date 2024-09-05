@@ -47,7 +47,7 @@ public static class Optimized
                 return null;
 
             // The contract is solid - we can use span with hardcoded values to use a part of the string.
-            // It eliminates all heap allocations because span is a ref struct.
+            // It eliminates all heap allocations because Span is a ref struct.
             // It will not dramatically improve the performance of the specific method by improving the overall performance of the service.
             var state = str.AsSpan(20, 2);
             return state switch

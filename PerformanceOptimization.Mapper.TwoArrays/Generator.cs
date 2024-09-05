@@ -18,7 +18,7 @@ public class Generator
             .RuleFor(output => output.Season, f => f.PickRandom(_seasons));
     }
 
-    public (Input input, Output[] Ouput) GetInput(int length)
+    private (Input input, Output[] Ouput) GetInput(int length)
     {
         var rd = new Random();
         var dates = Enumerable.Range(0, length).Select(i => DateTime.Today.AddDays(i * -1)).ToArray();
