@@ -110,9 +110,11 @@ public static class Original
 ```
 
 ### How to improve
-We can significantly improve performance just by replacing the liner search in array/list with a regular dictionary, but since .NET 8 there is a search-optimized version called FrozenDictionary - this is exactly what we need in this scenario.
-But should we limit ourselves to these changes because there are more places far away from good code?
-For example, using the **.Split()** method creates new strings that should be analysed and consumed by GC. It can be replaced by **.AsSpan()** with zero allocation on the heap.
+We can significantly improve performance just by replacing the liner search in array/list with a dictionary, and more specifically, FrozenDictionary. This is an immutable, search-optimized dictionary that was introduced in .NET 8.
+
+But should we limit ourselves to these changes because more places are far from good code?
+
+For example, using the **.Split()** method creates new strings that should be analyzed and consumed by GC. It can be replaced by **.AsSpan()** with zero allocation on the heap.
 These changes will not dramatically improve the performance of the specific method by improving the overall performance of the service by reducing pressure on GC.
 After these improvements, the method execution time will be drastically decreased.
 ```csharp
@@ -193,7 +195,7 @@ public static class Optimized
 ```
 
 ### Better results but higher complexity.
-There are ways how to get more performance without diving into **unsafe** code and making the mapper _readonly_.
+We can make the mapper even faster without diving into **unsafe** code and making the mapper _readonly_.
 We can replace classes with structs for data-storage entities and if be precise we will use **readonly record struct** instead of **records**.
 ```csharp
 // Before
@@ -224,7 +226,7 @@ public readonly record struct TemperatureSt(DateTime Date, double Value);
 ```
 Using **struct** is not as easy as using classes because of its nature. We must remember that when we pass a struct as an argument or return it from a method, all the data is copied.
 For small structs like primitives, this is more than normal, but for large entities, it will lead to performance degradation.
-But we can eliminate this problem just by using ref / it / out to eliminate data coping.
+But we can eliminate this problem simply by using ref / it / out to avoid data copying.
 Another feature of structs is the structure of array and array-based collections.
 An array of classes stores only links to an instance of that class in a heap, but an array of structs stores the whole struct itself.
 I think an array of structs gives less memory fragmentation (but has better chances of being allocated in LOH), which will decrease the time spent getting an array element.
