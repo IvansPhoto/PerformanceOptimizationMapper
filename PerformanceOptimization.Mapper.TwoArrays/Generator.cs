@@ -63,8 +63,8 @@ public class Generator
         var str = JsonSerializer.Serialize(new Input(input.Temperatures, input.Places));
         return (str, output);
     }
-    
-    string MapSeason(string src) => src switch
+
+    private static string MapSeason(string src) => src switch
     {
         "Winter" => "Wi",
         "Spring" => "Sp",

@@ -44,7 +44,7 @@ public static class Original
                 var segments = str.Split(';');
                 
                 // To pass tests, paste the DateTimeFormatInfo as second argument here in DateTime.TryParse().  
-                if (DateTime.TryParse(segments[0], out var result))
+                if (DateTime.TryParse(segments[0], DateTimeFormatInfo, out var result))
                 {
                     if (DateTime.Equals(temperature.Date, result))
                     {
