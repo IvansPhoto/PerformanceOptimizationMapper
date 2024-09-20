@@ -2,7 +2,7 @@
 This project is a real case from my work about the consequences of negligent writing a simple mapper. Because the code from the project cannot be shared, I created a very similar mapper for weather observations.
 ## How it has begun
 In one of my projects about refactoring, several endpoints run for more than a few seconds. We investigated the root cases for all slow endpoints and this story is about one of these investigations and fixes.
-The endpoint runs about 30 seconds in a development environment (~16 seconds on my PC). After reading the call chain and short debugging, I quickly found out that the mapper took all the time except for ~100 ms.
+The endpoint runs about 30 seconds in a development environment (~16 seconds on my PC). After reading the call chain and short debugging, I quickly found out that the mapper took all the time except for ~100ms .
 The full code is available on [GitHub](https://github.com/IvansPhoto/PerformanceOptimizationMapper)## Rules
 The purpose of the mapper is to merge data from two arrays of the Input record: Temperature[] Temperatures and string[] Places into a third array of the Output record.
 The resulting array should be the same size as the Temperatures array and should contain values and dates from the Temperatures array. Data for states and seasons fields should be received from the Places array. Each date in the Temperatures array is unique.
@@ -12,17 +12,18 @@ Arrays should be matched by the date. If the Places array does not have a record
 ## Results
 The benchmark results are placed in the result folder.
 This is a table from the basic benchmark.
-BenchmarkDotNet v0.13.11, Windows 11, AMD Ryzen 7 6800H.
+BenchmarkDotNet v0.13.11, Windows 11 (10.0.22631.4169/23H2/2023Update/SunValley3)
+AMD Ryzen 7 6800H with Radeon Graphics, 1 CPU, 16 logical and 8 physical cores
 .NET SDK 8.0.204
 [Host]     : .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
 DefaultJob : .NET 8.0.8 (8.0.824.36612), X64 RyuJIT AVX2
 
-| Method                    | N     | Mean          | Error       | StdDev      | Median        | Ratio    | RatioSD | Gen0         | Gen1       | Gen2     | Allocated   | Alloc Ratio |
-|-------------------------- |------ |--------------:|------------:|------------:|--------------:|---------:|--------:|-------------:|-----------:|---------:|------------:|------------:|
-| MapOriginal               | 10000 | 13,117.831 ms | 120.0636 ms | 112.3075 ms | 13,117.128 ms | 1,241.72 |   58.01 | 1568000.0000 | 25000.0000 |        - | 12511.64 MB |    2,437.84 |
-| MapOptimized              | 10000 |     12.582 ms |   0.5073 ms |   1.4957 ms |     13.328 ms |     1.00 |    0.00 |     875.0000 |   796.8750 | 484.3750 |     5.13 MB |        1.00 |
-| MapOptimizedStruct        | 10000 |      5.494 ms |   0.1072 ms |   0.1002 ms |      5.515 ms |     0.52 |    0.02 |     570.3125 |   515.6250 | 390.6250 |     4.16 MB |        0.81 |
-| MapOptimizedStructMarshal | 10000 |      5.175 ms |   0.0451 ms |   0.0400 ms |      5.183 ms |     0.49 |    0.02 |     632.8125 |   585.9375 | 468.7500 |     3.39 MB |        0.66 |
+| Method                    | N     | Mean          | Error       | StdDev      | Ratio  | RatioSD | Gen0        | Gen1       | Gen2     |  Allocated | Alloc Ratio |
+|-------------------------- |------ |--------------:|------------:|------------:|-------:|--------:|------------:|-----------:|---------:|-----------:|------------:|
+| MapOriginal               | 10000 | 10,042.696ms  | 146.6087ms  | 137.1378ms  | 924.52 |   44.07 | 971000.0000 | 24000.0000 |        - |  7752.77MB |    1,510.74 |
+| MapOptimized              | 10000 |     12.070ms  |   0.3817ms  |   1.1196ms  |   1.00 |    0.00 |    875.0000 |   765.6250 | 484.3750 |     5.13MB |        1.00 |
+| MapOptimizedStruct        | 10000 |      5.560ms  |   0.1109ms  |   0.1554ms  |   0.52 |    0.03 |    460.9375 |   429.6875 | 281.2500 |     4.16MB |        0.81 |
+| MapOptimizedStructMarshal | 10000 |      4.910ms  |   0.0547ms  |   0.0485ms  |   0.45 |    0.02 |    625.0000 |   593.7500 | 460.9375 |     3.39MB |        0.66 |
 
 ### Why is it so slow?
 The entry point is a small method called **Map**.
@@ -59,16 +60,16 @@ public static class Original
         };
         return mapSingle;
 
-        string[]? GetData(Temperature temperature, string[] strings)
+        string[]? GetData(Temperature temperature, DateTimeFormatInfo, string[] strings)
         {
             // After some time reading the code, you can notice that this is a foreach cycle inside .Select cycle
             // for searching an element and this is the general computation recourse waster.
             foreach (var str in strings)
             {
-                // The method creates a lot of allocations with new strings, but only the fist one is in use.
+                // The method creates a lot of allocations with new strings, but only the first one is in use.
                 var segments = str.Split(';');
                 
-                // To pass tests, paste the DateTimeFormatInfo as second argument here in DateTime.TryParse().  
+                // To pass tests, paste the DateTimeFormatInfo as the second argument here in DateTime.TryParse().  
                 if (DateTime.TryParse(segments[0], out var result))
                 {
                     if (DateTime.Equals(temperature.Date, result))
